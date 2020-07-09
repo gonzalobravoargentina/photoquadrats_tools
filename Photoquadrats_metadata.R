@@ -16,12 +16,12 @@ photodata <- as.data.frame(photodata) #transform to dataframe
 
 #create a data.frame with only columms of interest 
 library(dplyr)
-photodata_short<- dplyr::select (photodata,SourceFile,reeforientation=ImageDescription,reef= `Sub-location`, country=`Country-PrimaryLocationName`,time=TimeCreated,date=DateTimeOriginal,GPSLongitude, GPSLatitude)
+photodata_short<- dplyr::select (photodata,SourceFile,reeforientation=ImageDescription,reef= `Sub-location`, country=`Country-PrimaryLocationName`,time=TimeCreated,timeLOCAL=DateTimeOriginal,GPSLongitude, GPSLatitude)
 
 ##Configure Time and Day to get a correct format %z Signed offset in hours and minutes from UTC
-photodata_short$date.time <- strptime(photodata_short$date, "%Y:%m:%d %H:%M:%S")
+photodata_short$timeLOCAL <- strptime(photodata_short$timeLOCAL, "%Y:%m:%d %H:%M:%S")
 
-photodata_short$Date <- as.Date(photodata_short$date,"%Y:%m:%d %H:%M:%S")
+photodata_short$Date <- as.Date(photodata_short$timeLOCAL,"%Y:%m:%d %H:%M:%S")
 
 library(hms)
 photodata_short$time <- as_hms(photodata_short$time)
@@ -62,7 +62,8 @@ GPX_alltogether$timeLOCAL <- force_tzs(GPX_alltogether$timeUTC, "UTC", tzone_out
 #MERGE GPX_alltogether and photodata_short by time
 
 
-
+#This will merge only if the cases where the time of the gpx and the photo are exactly the same
+GPX_METADATA<- merge(photodata_short,GPX_alltogether, by = "timeLOCAL",all.x=T )
 
 
 
