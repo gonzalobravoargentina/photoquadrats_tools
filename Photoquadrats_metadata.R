@@ -1,72 +1,180 @@
 #Objectives:
-#1 read photos metadata using exifr package 
-#2 reag .gpx files using rgdal package
+#1 read the metadata info from photos using exifr package 
+#2 read .gpx files (GPS) using rgdal package
 #3 read .csv from dive computer
-#4 merge dataframes using time
+#3 read .csv from Paralenz camera
+#4 merge all data into one dataframe using localtime (Argentina) as index
+#5 export gps dato to photo metadata?
 
 
-#READ PHOTO METADATA-------------------
+# 1 READ METADATA INFO FROM PHOTOS-------------------
 
-#Choose folder with photos as wd
-files <- list.files(pattern = "*.jpg")#get a list of files .jpg in wd
+#Choose as WD the folder with photos 
+library(tcltk)
+setwd(tk_choose.dir(getwd(), "Choose a suitable folder"))
+photos <- list.files(pattern = "*.jpg")#get a list of files .jpg in wd
 library(exifr)
-photodata <- read_exif(files) #read metadata
-photodata <- as.data.frame(photodata) #transform to dataframe
-
+METADATA <- read_exif(photos) #read metadata
+METADATA <- as.data.frame(METADATA) #transform to dataframe
 
 #create a data.frame with only columms of interest 
 library(dplyr)
-photodata_short<- dplyr::select (photodata,SourceFile,reeforientation=ImageDescription,reef= `Sub-location`, country=`Country-PrimaryLocationName`,time=TimeCreated,timeLOCAL=DateTimeOriginal,GPSLongitude, GPSLatitude)
+METADATA_short<- dplyr::select (METADATA,SourceFile,time=TimeCreated,timeLOCAL=DateTimeOriginal) #only get time and photo names
 
-##Configure Time and Day to get a correct format %z Signed offset in hours and minutes from UTC
-photodata_short$timeLOCAL <- strptime(photodata_short$timeLOCAL, "%Y:%m:%d %H:%M:%S")
-
-photodata_short$Date <- as.Date(photodata_short$timeLOCAL,"%Y:%m:%d %H:%M:%S")
-
-library(hms)
-photodata_short$time <- as_hms(photodata_short$time)
+## Transform time to POSIXlt
+METADATA_short$timeLOCAL <- strptime(METADATA_short$timeLOCAL, "%Y:%m:%d %H:%M:%S")
 
 
 
-#READ .GPX METADATA-------------------
-#Choose folder with gpx as wd
+# 2 READ .GPX METADATA-------------------
+# GPS MODEL GARMIR ETREX 10 
+# recorded one point each 3 secs
+#Choose as WD folder gpx
+setwd(tk_choose.dir(getwd(), "Choose a suitable folder"))
 filesGPX <- list.files(pattern = "*.gpx")#get a list of files .jpg in wd
 
-#read gpx files and store them in a list
+#read gpx files and store them all in a list
 library(rgdal)
 gpx <- lapply(setNames(filesGPX, make.names(gsub("*.gpx$", "",filesGPX))), 
               function(f) { readOGR(dsn=f, layer="track_points") }
 )
 
-#create a list with coordinates and time of all de gpx
+#create a list with coordinates and time from all de gpx files
 gpxlist <- lapply(gpx,function(f) { data.frame(f@coords,f$time) })
 
+#Create one DATAFRAME with the gps data 
 library(purrr)
-GPX_alltogether <- dplyr::bind_rows(gpxlist)
+GPX <- dplyr::bind_rows(gpxlist)
 
 
-#As the GPX files has UTC time, we must covert to the same local time as the photos
+#As the GPX files are in UTC time, we must covert to the local time as the photos
 library(lubridate)
-GPX_alltogether$timeUTC <- strptime(GPX_alltogether$f.time,format = "%Y/%m/%d %H:%M:%OS",tz="UTC")
+GPX$timeUTC <- strptime(GPX$f.time,format = "%Y/%m/%d %H:%M:%OS",tz="UTC")
 
 #local time
-GPX_alltogether$timeLOCAL <- force_tzs(GPX_alltogether$timeUTC, "UTC", tzone_out = "America/Argentina/Catamarca", roll = FALSE)
+GPX$timeLOCAL <- force_tzs(GPX$timeUTC, "UTC", tzone_out = "America/Argentina/Catamarca", roll = FALSE)
+
+
+#3 READ DIVE COMPUTER DATA-------------------
+#MODEL OCEANIC GEO2
+#Choose as WD the folder with csv from diving computer 
+setwd(tk_choose.dir(getwd(), "Choose a suitable folder"))
+#Each diving computer file has the diving time in minutes and secs, recorded each 2 sec
+#The file name has the date and starting time of diving
+dive1 <- read.csv("2020-02-02_1108.csv")
+#at the moment the begining of the dive must be set manually by each dive and add time by 2 secs. BIG PROBLEM the diving computer doesnt record the seconds on the staring time
+startdivetime1 <- as.POSIXct("2020-02-02 11:08:00", tz = "America/Argentina/Catamarca")
+dive1$timeLOCAL <- seq.POSIXt( from=startdivetime1, by="2 secs", length.out=nrow(dive1))
+
+dive2 <- read.csv("2020-02-02_1146.csv")
+startdivetime2 <- as.POSIXct("2020-02-02 11:46:00", tz = "America/Argentina/Catamarca")
+dive2$timeLOCAL <- seq.POSIXt( from=startdivetime2, by="2 secs", length.out=nrow(dive2))
+
+#dive 1 and dive 2 in one dataframe
+COMPUTER <- rbind(dive1,dive2)
 
 
 
-#READ DIVE COMPUTER DATA-------------------
+#4 READ PARALENZ CAMERA DATA---------------------------------
+library(plyr)
+library(readr)
+#Choose as WD the folder with csv from PARALENZ camera
+setwd(tk_choose.dir(getwd(), "Choose a suitable folder"))
+#get a list of CSV files
+filesPARALENZ <- list.files(pattern = "*.CSV",full.names=TRUE)
 
-#not yet 
+#Read all CSV files an import all in one dataframe
+PARALENZ = ldply(filesPARALENZ, read_csv)
+
+#Transforme time column to POSIXlt (local time Argentina)
+PARALENZ$timeLOCAL <- strptime(PARALENZ$Time, "%Y:%m:%d %H:%M:%S")
+
+#Transforme depth column into numeric 
+PARALENZ$Depth <- as.numeric(PARALENZ$Depth)
 
 
-#MERGE GPX_alltogether and photodata_short by time
+# 5 MERGE DATAFRAMES (METADATA/GPX/COMPUTER/PARALENZ)----------
+
+#https://stackoverflow.com/questions/47790397/match-posixct-in-one-dataset-to-a-range-of-posixct-in-another-dataset
+
+library(dplyr)
+#loop for merging GPX AND METADATA using a time between +- 3 secs
+for (i in 1:length(GPX$timeLOCAL)){
+  isbewteen<-between(METADATA_short$timeLOCAL, GPX$timeLOCAL[i], GPX$timeLOCAL[i]+3)
+  METADATA_short$GPSLongitude[isbewteen ]<-GPX$coords.x1[i]
+  METADATA_short$GPSLatitude[isbewteen ]<-GPX$coords.x2[i]
+  METADATA_short$timegps[isbewteen ]<-GPX$f.time[i]
+}
+
+#loop for merging COMPUTER AND METADATA using a time between +- 3 secs
+for (i in 1:length(COMPUTER$timeLOCAL)){
+  isbewteen<-between(METADATA_short$timeLOCAL, COMPUTER$timeLOCAL[i], COMPUTER$timeLOCAL[i]+3)
+  METADATA_short$Depth.dive.computer[isbewteen ]<-COMPUTER$Depth..M.[i]
+  METADATA_short$Temp.dive.computer[isbewteen ]<-COMPUTER$Temp...C.[i]
+  METADATA_short$dive.time[isbewteen ]<-COMPUTER$Elapsed.Dive.Time..hr.min.[i]
+}
+
+#loop for merging PARALENZ AND METADATA using a time between +- 3 secs
+for (i in 1:length(PARALENZ$timeLOCAL)){
+  isbewteen<-between(METADATA_short$timeLOCAL, PARALENZ$timeLOCAL[i], PARALENZ$timeLOCAL[i]+3)
+  METADATA_short$Depth.PARALENZ[isbewteen ]<-PARALENZ$Depth[i]
+  METADATA_short$Temp.PARALENZ[isbewteen ]<-PARALENZ$Temperature[i]
+  METADATA_short$dive.time.PARALENZ[isbewteen ]<-PARALENZ$Time[i]
+  METADATA_short$video.PARALENZ[isbewteen ]<-PARALENZ$`Image/video-file`[i]
+}
 
 
-#This will merge only if the cases where the time of the gpx and the photo are exactly the same
-GPX_METADATA<- merge(photodata_short,GPX_alltogether, by = "timeLOCAL",all.x=T )
+#Generate a file
+#write.csv(METADATA_short,file="METADATA.csv")
 
 
+#view photos in a map
+#generate pannel for leaflet map
+content <- paste(sep = "
+",  
+"",  
+"Rocky Reefs",  
+"at La Tranquera")
+
+#Point of map center
+x1 <- -67.596737
+y1 <- -46.043945
+
+#color gradiente for depth
+brks <- c(0,1,5,10,12)  
+ncol <- length(brks)-1  
+library(RColorBrewer)
+depthcols <- c('grey20',brewer.pal(ncol-1, 'Purples'))  
+pal <- colorBin(depthcols, METADATA_short$Depth.dive.computer, bins = brks)
+
+library(leaflet)
+leaflet(METADATA_short) %>%  
+  #Use satellite image as base  
+  addProviderTiles("Esri.WorldImagery") %>%  
+  setView(lng = x1, lat = y1, zoom = 15) %>%  
+  #Add markers for oyster quadrats  
+  addCircleMarkers(~ GPSLongitude, ~ GPSLatitude,  
+                   color = 'white',opacity =1, weight = 1,  
+                   fillColor = ~pal(Depth.dive.computer),  
+                   popup = as.character(METADATA_short$Depth.dive.computer),  
+                   fillOpacity = 0.8,  
+                   radius = 3) %>% # add a popup for number of oysters  
+  #Add marker showing a picture of the survey site  
+  addMarkers(x1, y1, popup = content,  
+             options = markerOptions(opacity = 0.9, draggable=T)) %>%  
+  #Add a legend  
+  addLegend("topright", pal = pal,  
+            values = brks,   
+            title = "Depth",  
+            opacity = 1)  
 
 
+# 6 Write EXIF data to JPEG--------------
+
+https://stackoverflow.com/questions/57438052/write-exif-data-back-to-jpeg-in-r
+
+https://stackoverflow.com/questions/41849691/how-to-add-gps-latitude-and-longitude-using-exiftool-in-mac-how-to-edit-meta-da/
+
+https://stackoverflow.com/questions/47293978/r-write-exif-data-to-jpeg-file
 
 
