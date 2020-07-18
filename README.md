@@ -1,5 +1,5 @@
 # Photoquadrats_metadata
-R script to merge metadata of photoquadrats with .gpx file and dive computer file.
+R script to merge metadata from photoquadrats with position from GPS(.gpx) temperature and depth from dive computer.
 
 ## Objectives:
 ### 1 read the metadata info from photos using exifr package 
