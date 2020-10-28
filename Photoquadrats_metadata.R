@@ -1,20 +1,18 @@
 #Objectives:
-#1 read the metadata info from photos using exifr package 
-#2 read .gpx files (GPS) using rgdal package
-#3 read .csv from dive computer
-#3 read .csv from Paralenz camera
+#1 read the metadata info from photos using exifr package ()
+#2 read .gpx files (GPS) using rgdal package (GPX_files)
+#3 read .csv from dive computer (Photos)
+#3 read .csv from Paralenz camera (Paralenzcamera_files)
 #4 merge all data into one dataframe using localtime (Argentina) as index
 #5 export gps dato to photo metadata?
 
 
 # 1 READ METADATA INFO FROM PHOTOS-------------------
-
-#Choose as WD the folder with photos 
-library(tcltk)
-setwd(tk_choose.dir(getwd(), "Choose a suitable folder"))
+#Set WD to photos folder 
+setwd(paste0(getwd(),"/Photos"))
 photos <- list.files(pattern = "*.jpg")#get a list of files .jpg in wd
 library(exifr)
-METADATA <- read_exif(photos) #read metadata
+METADATA <- read_exif(photos) #read photos metadata
 METADATA <- as.data.frame(METADATA) #transform to dataframe
 
 #create a data.frame with only columms of interest 
@@ -29,8 +27,10 @@ METADATA_short$timeLOCAL <- strptime(METADATA_short$timeLOCAL, "%Y:%m:%d %H:%M:%
 # 2 READ .GPX METADATA-------------------
 # GPS MODEL GARMIR ETREX 10 
 # recorded one point each 3 secs
+
 #Choose as WD folder gpx
-setwd(tk_choose.dir(getwd(), "Choose a suitable folder"))
+setwd("..")
+setwd(paste0(getwd(),"/GPX_files"))
 filesGPX <- list.files(pattern = "*.gpx")#get a list of files .jpg in wd
 
 #read gpx files and store them all in a list
@@ -58,7 +58,8 @@ GPX$timeLOCAL <- force_tzs(GPX$timeUTC, "UTC", tzone_out = "America/Argentina/Ca
 #3 READ DIVE COMPUTER DATA-------------------
 #MODEL OCEANIC GEO2
 #Choose as WD the folder with csv from diving computer 
-setwd(tk_choose.dir(getwd(), "Choose a suitable folder"))
+setwd("..")
+setwd(paste0(getwd(),"/Divingcomputer_files"))
 #Each diving computer file has the diving time in minutes and secs, recorded each 2 sec
 #The file name has the date and starting time of diving
 dive1 <- read.csv("2020-02-02_1108.csv")
@@ -79,7 +80,8 @@ COMPUTER <- rbind(dive1,dive2)
 library(plyr)
 library(readr)
 #Choose as WD the folder with csv from PARALENZ camera
-setwd(tk_choose.dir(getwd(), "Choose a suitable folder"))
+setwd("..")
+setwd(paste0(getwd(),"/Paralenzcamera_files"))
 #get a list of CSV files
 filesPARALENZ <- list.files(pattern = "*.CSV",full.names=TRUE)
 
@@ -145,6 +147,7 @@ brks <- c(0,1,5,10,12)
 ncol <- length(brks)-1  
 library(RColorBrewer)
 depthcols <- c('grey20',brewer.pal(ncol-1, 'Purples'))  
+
 pal <- colorBin(depthcols, METADATA_short$Depth.dive.computer, bins = brks)
 
 library(leaflet)
@@ -170,11 +173,51 @@ leaflet(METADATA_short) %>%
 
 
 # 6 Write EXIF data to JPEG--------------
+# Add GPS positions to the Photos 
+#this will rewrite the metadata of the photos and generate a file with the original metadata
+setwd("..")
+setwd(paste0(getwd(),"/Photos"))
+#this is for south west hemisphere, for other hemispheres you must change the -GPSLatitudeRef=S -GPSLongitudeRef=W
+for (i in 1:nrow(METADATA_short)){
+  output <- system(sprintf("exiftool -GPSLatitude=%f -GPSLongitude=%f -GPSLatitudeRef=S -GPSLongitudeRef=W %s",METADATA_short$GPSLatitude[i],METADATA_short$GPSLongitude[i],METADATA_short$SourceFile[i])) 
+}
 
-https://stackoverflow.com/questions/57438052/write-exif-data-back-to-jpeg-in-r
 
-https://stackoverflow.com/questions/41849691/how-to-add-gps-latitude-and-longitude-using-exiftool-in-mac-how-to-edit-meta-da/
 
-https://stackoverflow.com/questions/47293978/r-write-exif-data-to-jpeg-file
+#Test if the photos have the GPS position
+picsPath <- "/Users/gonzalobravo/Documents/GitHub/photoquadrats_metadata/Photos"
+info <- system(paste("exiftool -GPSLatitude -GPSLongitude -DateTimeOriginal '", picsPath,"'",sep=""), inter=TRUE)
+
+library(exifr)
+METADATA2 <- read_exif(photos) #read photos metadata
+METADATA2 <- as.data.frame(METADATA2)
+METADATA2$GPSLatitude
+METADATA2$GPSLongitude
+
+leaflet(METADATA2) %>%  
+  #Use satellite image as base  
+  addProviderTiles("Esri.WorldImagery") %>%  
+  setView(lng = x1, lat = y1, zoom = 15) %>%  
+  #Add markers 
+  addCircleMarkers(~ GPSLongitude, ~ GPSLatitude,  
+                   color = 'white',opacity =1, weight = 1,  
+                   popup = as.character(METADATA2$FileName),  
+                   fillOpacity = 0.8,  
+                   radius = 3)
+
+
+#Sources
+#https://github.com/hrbrmstr/exiv
+
+#https://stackoverflow.com/questions/57438052/write-exif-data-back-to-jpeg-in-r
+
+#https://stackoverflow.com/questions/41849691/how-to-add-gps-latitude-and-longitude-using-exiftool-in-mac-how-to-edit-meta-da/
+
+#https://stackoverflow.com/questions/47293978/r-write-exif-data-to-jpeg-file
+
+#http://timelyportfolio.github.io/rCharts_catcorrjs/exif/
+
+#https://stackoverflow.com/questions/41849691/how-to-add-gps-latitude-and-longitude-using-exiftool-in-mac-how-to-edit-meta-da/
+
 
 
