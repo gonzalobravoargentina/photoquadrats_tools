@@ -73,8 +73,7 @@ dive2$timeLOCAL <- seq.POSIXt( from=startdivetime2, by="2 secs", length.out=nrow
 
 #dive 1 and dive 2 in one dataframe
 COMPUTER <- rbind(dive1,dive2)
-
-
+rm(dive1,dive2)
 
 #4 READ PARALENZ CAMERA DATA---------------------------------
 library(plyr)
@@ -86,7 +85,7 @@ setwd(paste0(getwd(),"/Paralenzcamera_files"))
 filesPARALENZ <- list.files(pattern = "*.CSV",full.names=TRUE)
 
 #Read all CSV files an import all in one dataframe
-PARALENZ = ldply(filesPARALENZ, read_csv)
+PARALENZ = ldply(filesPARALENZ, read.csv)
 
 #Transforme time column to POSIXlt (local time Argentina)
 PARALENZ$timeLOCAL <- strptime(PARALENZ$Time, "%Y:%m:%d %H:%M:%S")
@@ -113,8 +112,16 @@ for (i in 1:length(COMPUTER$timeLOCAL)){
   isbewteen<-between(METADATA_short$timeLOCAL, COMPUTER$timeLOCAL[i], COMPUTER$timeLOCAL[i]+3)
   METADATA_short$Depth.dive.computer[isbewteen ]<-COMPUTER$Depth..M.[i]
   METADATA_short$Temp.dive.computer[isbewteen ]<-COMPUTER$Temp...C.[i]
+  METADATA_short$TimeLOCAL.computer[isbewteen ] <-COMPUTER$timeLOCAL[i]
   METADATA_short$dive.time[isbewteen ]<-COMPUTER$Elapsed.Dive.Time..hr.min.[i]
 }
+
+METADATA_short$TimeLOCAL.computer <- as.POSIXct(METADATA_short$TimeLOCAL.computer,origin = "1970-01-01",tz = "America/Argentina/Catamarca")
+
+#another way to merge using min or sec resolution 
+#merge(cbind(round(METADATA_short$timeLOCAL, "min"), METADATA_short),cbind(round(COMPUTER$timeLOCAL, "min"), COMPUTER),by=1, suffixes=c("_photo", "_computer"))[-1]
+
+
 
 #loop for merging PARALENZ AND METADATA using a time between +- 3 secs
 for (i in 1:length(PARALENZ$timeLOCAL)){
