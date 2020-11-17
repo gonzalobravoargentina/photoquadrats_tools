@@ -15,5 +15,6 @@ R scripts to work with photoquadrats metadadata.
 #### 1 read the metadata from photos using exifr package 
 #### 2 create interactive maps with leaflet for Photoquadrats
 
+![psub_footer](https://github.com/gonzalobravoargentina/photoquadrats/blob/master/Map.jpeg)
 
 [![psub_footer](https://www.proyectosub.org.ar/wp-content/uploads/2020/04/logoletras_org.png)](https://proyectosub.org.ar)
