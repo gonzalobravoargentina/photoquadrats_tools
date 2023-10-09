@@ -6,9 +6,11 @@
 
 
 #Read Photoquadrats Metadata----
-#Set WD to photos folder 
-setwd(paste0(getwd(),"/MAP_example/photoquadrats_georeferenced"))
-photoquadrats <- list.files(pattern = "*.jpg")#get a list of files .jpg in wd
+# Set working directory to the folder with the photos (in r Studio= session/Set Working directory /Choose directory) -OPCION 1
+
+setwd(paste0(getwd(),"/MAP_example/photoquadrats_georeferenced"))#Set WD to photos folder- OPTION 2
+photoquadrats <- list.files(pattern = ".jpg|.JPG|.png")#get a list of files .jpg in wd
+
 library(exifr)
 METADATA_photoquadrats <- read_exif(photoquadrats) #read photoquadrat metadata
 METADATA_photoquadrats  <- as.data.frame(METADATA_photoquadrats) #transform to dataframe
@@ -19,7 +21,6 @@ METADATA_photoquadrats_short<- dplyr::select (METADATA_photoquadrats,SourceFile,
 
 ## Transform time to POSIXlt
 METADATA_photoquadrats_short$timeLOCAL <- strptime(METADATA_photoquadrats_short$timeLOCAL, "%Y:%m:%d %H:%M:%S")
-
 
 
 #Coarse gps position of photos with density of spp
@@ -40,7 +41,6 @@ density_photo = full_join(METADATA_photoquadrats_short,densitydata, by = c("Sour
 
 #select only horizontal photos
 #density_photo <- subset(density_photo1,reef.area=="horizontal")
-
 
 
 # 2 READ .GPX ------------------
@@ -72,10 +72,6 @@ GPX$timeUTC <- strptime(GPX$f.time,format = "%Y/%m/%d %H:%M:%OS",tz="UTC")
 
 #local time
 GPX$timeLOCAL <- force_tzs(GPX$timeUTC, "UTC", tzone_out = "America/Argentina/Catamarca", roll = FALSE)
-
-
-
-
 
 
 #generate pannel for leaflet map
