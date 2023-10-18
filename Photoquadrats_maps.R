@@ -7,7 +7,6 @@
 
 #Read Photoquadrats Metadata----
 # Set working directory to the folder with the photos (in r Studio= session/Set Working directory /Choose directory) -OPCION 1
-
 setwd(paste0(getwd(),"/MAP_example/photoquadrats_georeferenced"))#Set WD to photos folder- OPTION 2
 photoquadrats <- list.files(pattern = ".jpg|.JPG|.png")#get a list of files .jpg in wd
 
@@ -116,6 +115,8 @@ pal <- colorBin(urchincols, density_photo$Arbacia.dufresnii, bins = brks)
             title = "Number of urchins (Arbacia dufresnii)",  
             opacity = 1)  
 
+
+
 #guardar archivos en carpeta aparte
 #htmlwidgets::saveWidget(mapout, file = 'urchins_map.html', selfcontained = F, libdir = "leafletmap_files")
 
@@ -137,7 +138,7 @@ library(sp)
 
 options(digits=10)
 # Reaf the GPX file of each reef track- read one by one and then stored in a dataframe (reef1, reef2..)
-pfile <- htmlTreeParse(file = "MIII_26-MAR-19_13hs.gpx", error = function(...) {
+pfile <- htmlTreeParse(file = "DI_11-MAR-19_14hs.gpx", error = function(...) {
 }, useInternalNodes = T)
 
 elevations <- as.numeric(xpathSApply(pfile, path = "//trkpt/ele", xmlValue))

@@ -190,7 +190,6 @@ for (i in 1:nrow(METADATA_short)){
 }
 
 
-
 #Test if the photos have the GPS position
 picsPath <- "/Users/gonzalobravo/Documents/GitHub/photoquadrats_metadata/Photos"
 info <- system(paste("exiftool -GPSLatitude -GPSLongitude -DateTimeOriginal '", picsPath,"'",sep=""), inter=TRUE)
