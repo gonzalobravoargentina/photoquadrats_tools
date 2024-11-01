@@ -126,8 +126,12 @@ writeGPX(divetrack$lat,divetrack$lon,divetrack$timeUTC,"bahiachica_lapaloma.gpx"
 ##COMBINE PHOTO METADATA AND GPS POSITION------
 
 #READ photos
-# Set working directory to the folder with the photos (in r Studio= session/Set Working directory /Choose directory)
-files <- list.files(pattern = "*.jpg")#get a list of files .jpg in wd
+
+# Define the path to the folder
+PhotoswithGPS <- "PhotoswithGPS"
+
+# List .jpg files in the specified folder
+files <- list.files(path = PhotoswithGPS, pattern = "\\.jpg$", full.names = T)#get a list of files .jpg in wd
 
 library(exifr)
 photometadata <- read_exif(files) #read metadata 
@@ -159,7 +163,7 @@ for (i in 1:length(divetrack$timeUTC)){
 #the photos must be available in some url to be used in the map. In this case we upload the photos to github and use their url
 
 # URL base (here we have the photos)
-base_url <- "https://raw.githubusercontent.com/gonzalobravoargentina/photoquadrats/master/Photos/"
+base_url <- "https://raw.githubusercontent.com/gonzalobravoargentina/photoquadrats/master/PhotoswithGPS/"
 
 # add the name of each photo in the photometadata dataframe
 photometadata$url <- paste0(base_url, photometadata$FileName)
@@ -197,7 +201,7 @@ map <- leaflet(photometadata)%>%# add different provider tiles
     lat = ~lat,
     color = "red",
     weight = 2
-  )%>%# Agregar donde se encontraron las anemonas
+  )%>%# Agregar donde se encontraron las fotos
   addCircleMarkers(
     data = photometadata, 
     ~GPSLongitude, 
