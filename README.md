@@ -36,10 +36,6 @@ This script is dedicated to achieving the following objectives:
 
 ### Objectives:
 
-Tag photos along a GPS track on a map, enhancing the visualization and analysis of underwater data. This feature helps you geotag your photos, providing valuable insights into the geographical context of your underwater photoquadrats.
+Tag photos along a GPS track on a map, enhancing the visualization and analysis of underwater data. This feature helps you geotag your photos, providing valuable insights into the geographical context of your underwater photoquadrats. If you'd like to explore the interactive HTML map, please download the ['map_withphotos.html'](https://github.com/gonzalobravoargentina/photoquadrats/blob/master/map_withphotos.html) file and open it in a web browser.
 
-
-[Enlace al Mapa Interactivo](https://raw.githubusercontent.com/gonzalobravoargentina/photoquadrats/master/map_withphotos.html)
-
-
-![psub_footer](https://github.com/gonzalobravoargentina/photoquadrats/blob/master/Map.jpeg)
+![psub_footer](https://github.com/gonzalobravoargentina/photoquadrats/blob/master/map_withphotos.png)
