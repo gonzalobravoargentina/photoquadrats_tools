@@ -32,7 +32,7 @@ This script is dedicated to achieving the following objectives:
 2. **Interactive Maps:** Create interactive and visually engaging maps for visualizing Photoquadrats data using the 'leaflet' library.
 
 
-## underwater_track.R
+## Underwater_track.R
 
 ### Objectives:
 
