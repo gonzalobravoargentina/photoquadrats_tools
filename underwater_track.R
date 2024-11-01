@@ -208,7 +208,7 @@ map <- leaflet(photometadata)%>%# add different provider tiles
     radius = 5,
     fillOpacity = 0.5,
     stroke = T,
-    popup = ~popup2)%>%
+    popup = ~popup)%>%
 # Agregar un control personalizado
 addControl(
   html = '<div style="background-color: white; padding: 10px; border: 2px solid black; text-align: center; font-weight: bold;">Tiempo de buceo: 1.5 h, Distancia recorrida: 1170 m </div>',
