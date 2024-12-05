@@ -1,6 +1,6 @@
-# Photoquadrats 📸🌊
+# Photoquadrats_tools 📸🌊
 
-**Photoquadrats** is a collection of R scripts for managing, processing, and analyzing metadata from photoquadrats, designed to streamline workflows for marine research and annotation platforms.
+**Photoquadrats_tools** is a collection of R scripts for managing, processing, and analyzing metadata from photoquadrats, designed to streamline workflows for marine research and annotation platforms.
 
 ---
 
