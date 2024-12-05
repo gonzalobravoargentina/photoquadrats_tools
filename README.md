@@ -18,7 +18,7 @@
 ---
 
 ### **Photoquadrats_metadata.R**  
-Generates metadata files compatible with **CoralNet** and **BIIGLE** platforms, simplifying photo annotation workflows.
+Generates metadata files compatible with **[CoralNet](https://coralnet.ucsd.edu/source/)** and **[BIIGLE](https://biigle.de/)** platforms, simplifying photo annotation workflows.
 
 #### Features:
 - **BIIGLE Metadata:**
